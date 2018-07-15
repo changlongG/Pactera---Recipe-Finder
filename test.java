@@ -4,8 +4,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 
 import com.csvreader.CsvReader;
@@ -17,10 +20,41 @@ import com.google.gson.JsonParser;
 public class test {
 	static ArrayList<Fridge> fridgelist = new ArrayList<Fridge>();
 	static ArrayList<Recipes> recipeslist = new ArrayList<Recipes>();
+	static ArrayList<Fridge> ingredientlist = new ArrayList<Fridge>();
+	static ArrayList<Recipes> resultlist = new ArrayList<Recipes>();
 
-	public static void display(ArrayList<String> lst) {
-		for (String s : lst)
-			System.out.println(s);
+	static SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+	static Date dateToday = new Date();
+
+	static Comparator<Fridge> comparator = new Comparator<Fridge>() {
+		public int compare(Fridge s1, Fridge s2) {
+			Date temp1 = new Date();
+			Date temp2 = new Date();
+			try {
+				temp1 = parseDate(s1.getUseby());
+				temp2 = parseDate(s2.getUseby());
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+			if (temp1.before(temp2)) {
+				return -1;
+			} else if (temp1.equals(temp2)) {
+				return 0;
+			} else {
+				return 1;
+			}
+
+		}
+	};
+
+	public static Date parseDate(String s) throws ParseException {
+		Date temp = sdf.parse(s);
+		return temp;
+	}
+
+	public static void display(ArrayList<Fridge> lst) {
+		for (Fridge s : lst)
+			System.out.println(s.getItem());
 	}
 
 	private static String getStrFromJson(String name) {
@@ -49,12 +83,16 @@ public class test {
 			reader.close();
 
 			for (int row = 0; row < csvList.size(); row++) {
-				Fridge fridge = new Fridge();
-				fridge.setItem(csvList.get(row)[0]);
-				fridge.setAmount(Integer.parseInt(csvList.get(row)[1]));
-				fridge.setUnit(csvList.get(row)[2]);
-				fridge.setUseby(csvList.get(row)[3]);
-				fridgelist.add(fridge);
+				Date temp1 = parseDate(csvList.get(row)[3]);
+				// dateToday = parseDate("1/1/2011");
+				if (temp1.after(dateToday)) {
+					Fridge fridge = new Fridge();
+					fridge.setItem(csvList.get(row)[0]);
+					fridge.setAmount(Integer.parseInt(csvList.get(row)[1]));
+					fridge.setUnit(csvList.get(row)[2]);
+					fridge.setUseby(csvList.get(row)[3]);
+					fridgelist.add(fridge);
+				}
 
 			}
 
@@ -64,7 +102,6 @@ public class test {
 	}
 
 	public static void getResult() {
-		ArrayList<String> resultlist = new ArrayList<String>();
 
 		for (Recipes r : recipeslist) {
 			int signal = 0;
@@ -73,32 +110,68 @@ public class test {
 					if (i.getItem().equals(f.getItem()) && i.getUnit().equals(f.getUnit())
 							&& i.getAmount() <= f.getAmount()) {
 						signal += 1;
-						// System.out.println(f.getItem());
 						break;
 					}
 				}
 			}
 			if (signal == r.getIngredients().size()) {
-				resultlist.add(r.getName());
+				resultlist.add(r);
 			}
 		}
-		System.out.println(resultlist.size());
-		display(resultlist);
+		// System.out.println(resultlist.size());
+		// display(resultlist);
+		for (Recipes r : resultlist) {
+			for (Ingredients i : r.getIngredients()) {
+				Fridge fridge = new Fridge();
+				fridge.setItem(i.getItem());
+				fridge.setAmount(i.getAmount());
+				fridge.setUnit(i.getUnit());
+				for (Fridge f : fridgelist) {
+					if (i.getItem().equals(f.getItem())) {
+						fridge.setUseby(f.getUseby());
+					}
+				}
+				if (ingredientlist.isEmpty()) {
+					ingredientlist.add(fridge);
+				} else {
+					int signal = 0;
+					for (Fridge f1 : ingredientlist) {
+						if (fridge.getItem().equals(f1.getItem())) {
+							signal = 1;
+							break;
+						}
+					}
+					if (signal == 0) {
+						ingredientlist.add(fridge);
+					}
+				}
+			}
+		}
 		// System.out.println(a.getItem() + "," + a.getAmount() + "," +
 		// a.getUnit());
+		Collections.sort(ingredientlist, comparator);
+		// display(ingredientlist);
+		if (resultlist.size() == 1) {
+			System.out.println(resultlist.get(0).getName());
+		} else if (resultlist.size() == 0) {
+			System.out.println("Order Takeout");
+		} else {
+			for (Recipes r : resultlist) {
+				for (Ingredients i : r.getIngredients()) {
+					if (i.getItem().equals(ingredientlist.get(0).getItem())) {
+						System.out.println(r.getName());
 
+					}
+				}
+
+			}
+		}
 	}
 
-	public static void main(String[] args) {
-		// SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd ");
-		// Date date = sdf.parse(dateString);
-		/*
-		 * Date day = new Date(); String dateStr = (new
-		 * SimpleDateFormat("dd/MM/yyyy")).format(day);
-		 * System.out.println(dateStr);
-		 */
+	public static void main(String[] args) throws ParseException {
+
 		JsonParser parser = new JsonParser();
-		JsonArray jsonArray = parser.parse(getStrFromJson("C:/Users/ChangLong/Desktop/recipes2.json")).getAsJsonArray();
+		JsonArray jsonArray = parser.parse(getStrFromJson("C:/Users/ChangLong/Desktop/recipes.json")).getAsJsonArray();
 		Gson gson = new Gson();
 
 		for (JsonElement user : jsonArray) {
@@ -109,5 +182,11 @@ public class test {
 		readCsvFile(csvfilePath);
 		// display(fridgelist);
 		getResult();
+
+		String dateTodayStr = sdf.format(dateToday);
+		System.out.println(dateTodayStr);
+		fridgelist.clear();
+		recipeslist.clear();
+		resultlist.clear();
 	}
 }

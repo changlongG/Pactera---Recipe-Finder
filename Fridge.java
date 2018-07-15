@@ -9,6 +9,7 @@ public class Fridge {
 	private String item;
 	private int amount;
 	private EnumUnit unit;
+	SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
 	public String getUseby() {
 		String dateStr = (new SimpleDateFormat("dd/MM/yyyy")).format(useby);
@@ -16,7 +17,7 @@ public class Fridge {
 	}
 
 	public void setUseby(String useby1) {
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
 		try {
 			this.useby = sdf.parse(useby1);
 		} catch (ParseException e) {
