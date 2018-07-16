@@ -1,4 +1,5 @@
-package test;
+package recipesfinder;
+
 
 import java.util.List;
 
