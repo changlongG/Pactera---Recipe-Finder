@@ -1,8 +1,11 @@
 package recipesfinder;
 
-
 import java.util.List;
 
+/**
+ * class Recipes representing recipes from Json file, has an InnerClass
+ * Ingredients
+ */
 public class Recipes {
 	private String name;
 	private List<Ingredients> ingredients;

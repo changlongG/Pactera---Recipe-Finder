@@ -17,6 +17,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
+/**
+ * Logic implementation class RecipesFinder
+ */
 public class RecipesFinder {
 	static ArrayList<Fridge> fridgelist = new ArrayList<Fridge>();
 	static ArrayList<Recipes> recipeslist = new ArrayList<Recipes>();
@@ -30,6 +33,7 @@ public class RecipesFinder {
 		this.dateToday = d;
 	}
 
+	// Comparator for sorting by use-by(date)
 	static Comparator<Fridge> comparator = new Comparator<Fridge>() {
 		public int compare(Fridge s1, Fridge s2) {
 			Date temp1 = new Date();
@@ -56,11 +60,7 @@ public class RecipesFinder {
 		return temp;
 	}
 
-	public static void display(ArrayList<Fridge> lst) {
-		for (Fridge s : lst)
-			System.out.println(s.getItem());
-	}
-
+	// Parse Json file
 	public static String getStrFromJson(String name) {
 		String strData = null;
 		try {
@@ -77,6 +77,7 @@ public class RecipesFinder {
 
 	}
 
+	// Parse CSV file. saved as Arraylist(object) fridgelist
 	public static void readCsvFile(String filePath) {
 		try {
 			ArrayList<String[]> csvList = new ArrayList<String[]>();
@@ -89,7 +90,6 @@ public class RecipesFinder {
 
 			for (int row = 0; row < csvList.size(); row++) {
 				Date temp1 = parseDate(csvList.get(row)[3]);
-				// dateToday = parseDate("1/1/2011");
 				if (temp1.after(dateToday)) {
 					Fridge fridge = new Fridge();
 					fridge.setItem(csvList.get(row)[0]);
@@ -106,6 +106,7 @@ public class RecipesFinder {
 		}
 	}
 
+	// Get final result
 	public static String getResult() {
 		String result = "";
 		for (Recipes r : recipeslist) {
@@ -123,8 +124,6 @@ public class RecipesFinder {
 				resultlist.add(r);
 			}
 		}
-		// System.out.println(resultlist.size());
-		// display(resultlist);
 		for (Recipes r : resultlist) {
 			for (Ingredients i : r.getIngredients()) {
 				Fridge fridge = new Fridge();
@@ -152,10 +151,8 @@ public class RecipesFinder {
 				}
 			}
 		}
-		// System.out.println(a.getItem() + "," + a.getAmount() + "," +
-		// a.getUnit());
+
 		Collections.sort(ingredientlist, comparator);
-		// display(ingredientlist);
 		if (resultlist.size() == 1) {
 			result = resultlist.get(0).getName();
 		} else if (resultlist.size() == 0) {
@@ -171,11 +168,18 @@ public class RecipesFinder {
 
 			}
 		}
+
 		return result;
 	}
 
 	public String execute() {
+		fridgelist.clear();
+		recipeslist.clear();
+		ingredientlist.clear();
+		resultlist.clear();
 		UploadServlet us = new UploadServlet();
+
+		// Put Json object into Arraylist(object) recipeslist
 		JsonParser parser = new JsonParser();
 		JsonArray jsonArray = parser.parse(getStrFromJson(us.getJsonfilePath())).getAsJsonArray();
 		Gson gson = new Gson();

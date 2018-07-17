@@ -21,23 +21,15 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 @WebServlet("/UploadServlet")
 public class UploadServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-
-	// directory
 	private static final String UPLOAD_DIRECTORY = "upload";
 
-	// paremeters for configuration
 	private static final int MEMORY_THRESHOLD = 1024 * 1024 * 3; // 3MB
 	private static final int MAX_FILE_SIZE = 1024 * 1024 * 40; // 40MB
 	private static final int MAX_REQUEST_SIZE = 1024 * 1024 * 50; // 50MB
 
 	public static String CSVfilePath;
 	public static String JsonfilePath;
-
 	RecipesFinder rf = new RecipesFinder();
-
-	public UploadServlet() {
-
-	}
 
 	public String getCSVfilePath() {
 		return CSVfilePath;
@@ -49,24 +41,27 @@ public class UploadServlet extends HttpServlet {
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		// check if it's a file
 		if (!ServletFileUpload.isMultipartContent(request)) {
 			PrintWriter writer = response.getWriter();
-			writer.println("Error:  enctype=multipart/form-data");
+			writer.println("Error: no enctype=multipart/form-data");
 			writer.flush();
 			return;
 		}
 
-		// parameter configuration for uploading
 		DiskFileItemFactory factory = new DiskFileItemFactory();
 		factory.setSizeThreshold(MEMORY_THRESHOLD);
 		factory.setRepository(new File(System.getProperty("java.io.tmpdir")));
+
 		ServletFileUpload upload = new ServletFileUpload(factory);
+
 		upload.setFileSizeMax(MAX_FILE_SIZE);
+
 		upload.setSizeMax(MAX_REQUEST_SIZE);
+
 		upload.setHeaderEncoding("UTF-8");
 
 		String uploadPath = getServletContext().getRealPath("/") + File.separator + UPLOAD_DIRECTORY;
+
 		File uploadDir = new File(uploadPath);
 		if (!uploadDir.exists()) {
 			uploadDir.mkdir();
@@ -76,8 +71,7 @@ public class UploadServlet extends HttpServlet {
 			@SuppressWarnings("unchecked")
 			List<FileItem> formItems = upload.parseRequest(request);
 
-			if (formItems != null && formItems.size() > 0) {
-				System.out.println(formItems.size());
+			if (formItems != null && formItems.size() > 1) {
 				for (FileItem item : formItems) {
 					if (!item.isFormField()) {
 						String fileName = new File(item.getName()).getName();
@@ -87,19 +81,22 @@ public class UploadServlet extends HttpServlet {
 						if (fileName.contains("json")) {
 							JsonfilePath = uploadPath + File.separator + fileName;
 						}
-
 						String filePath = uploadPath + File.separator + fileName;
 						File storeFile = new File(filePath);
-
+						// System.out.println(filePath);
 						item.write(storeFile);
 
 					}
 				}
+				// System.out.println(CSVfilePath);
+				// System.out.println(JsonfilePath);
 				request.setAttribute("message", rf.execute());
 			}
 		} catch (Exception ex) {
+			ex.printStackTrace();
 			request.setAttribute("message", "error: " + ex.getMessage());
 		}
+
 		getServletContext().getRequestDispatcher("/test/message.jsp").forward(request, response);
 	}
 }

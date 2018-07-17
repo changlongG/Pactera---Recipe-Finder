@@ -1,10 +1,12 @@
 package recipesfinder;
 
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * class Fridge representing fridge from CSV file
+ */
 public class Fridge {
 	private Date useby;
 	private String item;

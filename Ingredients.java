@@ -1,6 +1,8 @@
 package recipesfinder;
 
-
+/**
+ * class Ingredients representing ingredients, an InnerClass of Recipes
+ */
 public class Ingredients {
 
 	private String item;
